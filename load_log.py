@@ -8,7 +8,7 @@ from utils import logger
 
 
 def get_star_rail_url():
-    logger.info("正在获取星穹铁道链接")
+    logger.info("正在获取崩坏：星穹铁道链接")
     logger.debug("路径:"+star_rail_game_path)
     f = open(star_rail_game_path, 'r', encoding='utf-8', errors='replace')
     words = f.read()
@@ -33,7 +33,7 @@ def get_star_rail_url():
                 copy(latest_url)
                 logger.info(latest_url)
                 return latest_url
-    logger.error("未找到星穹铁道链接")
+    logger.error("未找到崩坏：星穹铁道链接")
     return None
 
 

@@ -14,7 +14,7 @@ sleep_time = 1
 def get_star_rail():
     url = get_star_rail_url()
     if url is None:
-        raise Exception("未找到星穹铁道链接")
+        raise Exception("未找到崩坏：星穹铁道链接")
     urp = urlparse(url)
     parse = dict(parse_qsl(urp.query))
     new_df = get_new_df(columns=star_rail_idx)
@@ -61,7 +61,7 @@ def get_star_rail():
             logger.info("获取 "+gname+" 第 "+str(page)+" 页成功,"+str(items)+",end_id:"+parse["end_id"])
             page += 1
     backup_and_merge_star_rail(uid, new_df)
-    logger.info("星穹铁道抽卡数据更新完成:"+uid)
+    logger.info("崩坏：星穹铁道抽卡数据更新完成:"+uid)
 
 
 if __name__ == '__main__':

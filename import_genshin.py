@@ -10,6 +10,6 @@ def import_genshin(ugif_path):
 
 
 if __name__ == '__main__':
-    path = "C:\\Users\\25493\\Downloads\\139163286.json"  # 导入uigf的绝对路径
+    path = ""  # 导入uigf的绝对路径
     # write_json(path, load_json(path))
     import_genshin(path)

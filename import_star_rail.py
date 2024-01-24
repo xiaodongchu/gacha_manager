@@ -6,8 +6,11 @@ def import_star_rail(ugif_path):
     uid = new_ugif["info"]["uid"]
     new_df = uigf_to_df_star_rail(new_ugif)
     backup_and_merge_star_rail(uid, new_df)
-    logger.info("星铁抽卡数据导入完成:" + uid)
+    logger.info("崩坏：星穹铁道抽卡数据导入完成:" + uid)
 
 
 if __name__ == '__main__':
-    import_star_rail("139163286.json")  # 导入uigf的绝对路径
+    path = ""  # 导入uigf的绝对路径
+    # write_json(path, load_json(path))
+    import_star_rail(path)
+

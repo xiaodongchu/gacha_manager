@@ -8,7 +8,7 @@ from utils import logger, get_new_df, get_genshin_ids, genshin_idx, backup_and_m
 from config_jsons.api_info import genshin_api_info
 
 
-sleep_time = 1
+sleep_time = 0.6
 
 
 def get_genshin():
@@ -58,7 +58,7 @@ def get_genshin():
                 new_df.loc[len(new_df)] = j
             parse["end_id"] = res[-1]["id"]
             items = [i["name"] for i in res]
-            logger.info("获取 "+gname+" 第 "+str(page)+" 页成功,"+str(items)+",end_id: "+parse["end_id"])
+            logger.info(gname+" "+str(page)+" 页,"+str(items)+",end_id: "+parse["end_id"])
             page += 1
     backup_and_merge_genshin(uid, new_df)
     logger.info("原神抽卡数据更新完成:"+uid)

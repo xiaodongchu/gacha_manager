@@ -1,11 +1,3 @@
-config_jsons/genshin_id.json
-config_jsons/star_rail_id.json
-config_jsons/genshin_schema.json
-config_jsons/star_rail_schema.json
-config.py
-log
-save/genshin
-save/star_rail
-.idea
+.idea/
 venv/
 __pycache__/

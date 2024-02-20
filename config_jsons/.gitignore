@@ -1,0 +1,5 @@
+!.gitignore
+genshin_id.json
+star_rail_id.json
+genshin_schema.json
+star_rail_schema.json

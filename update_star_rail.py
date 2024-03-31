@@ -33,7 +33,7 @@ def get_star_rail():
                 raise Exception("获取失败" + res["message"])
             res = res["data"]["list"]
             if len(res) < 1:
-                logger.info("获取 "+gname+" ["+gtype+"]:"+gname+" 结束")
+                logger.info("获取 "+" ["+gtype+"]:"+gname+" 结束")
                 break
             if not uid:
                 uid = str(res[0]["uid"])

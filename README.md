@@ -9,20 +9,6 @@
 pip install -r requirements.txt
 ```
 
-### 导入数据
-
-#### 原神
-
-- 支持符合[统一可交换抽卡记录标准 | UIGF-org](https://uigf.org/zh/standards/UIGF.html)的JSON文件导入
-- 在`import_genshin.py`的`main`函数中配置要导入的文件路径，运行即可
-- ToDo:暂未实现json格式核对，请自行确保导入`json["list"]`中各项符合以下标准:[Json Schema](https://uigf.org/zh/standards/UIGF.html#json-schema)
-
-#### 崩坏：星穹铁道
-
-- 支持符合[崩坏：星穹铁道抽卡记录标准](https://uigf.org/zh/standards/SRGF.html)的JSON文件导入
-- 在`import_star_rail.py`的`main`函数中配置要导入的文件路径，运行即可
-- ToDo:暂未实现json格式核对，请自行确保导入`json["list"]`中各项符合以下标准:[Json Schema](https://uigf.org/zh/standards/SRGF.html#json-schema)
-
 ### 数据储存
 
 - 原神数据默认按`uid`储存于`/save/genshin/`下
@@ -34,7 +20,7 @@ pip install -r requirements.txt
 
 #### 配置游戏日志路径
 
-- 在`config.py`中仿照示例，找到自己对应游戏日志路径:`data_2`
+- 在`config.py`中仿照示例，找到自己对应游戏的`data_2`日志路径:
 
 #### 原神
 
@@ -64,3 +50,16 @@ pip install -r requirements.txt
 - 运行`update_star_rail.py`
 - 查看`/save/star_rail/uid.xlsx`
 
+### 导入数据
+
+#### 原神
+
+- 支持符合[统一可交换抽卡记录标准 | UIGF-org](https://uigf.org/zh/standards/UIGF.html)的JSON文件导入
+- 在`import_genshin.py`的`main`函数中配置要导入的文件路径，运行即可
+- ToDo:暂未实现json格式核对，请自行确保导入`json["list"]`中各项符合以下标准:[Json Schema](https://uigf.org/zh/standards/UIGF.html#json-schema)
+
+#### 崩坏：星穹铁道
+
+- 支持符合[崩坏：星穹铁道抽卡记录标准](https://uigf.org/zh/standards/SRGF.html)的JSON文件导入
+- 在`import_star_rail.py`的`main`函数中配置要导入的文件路径，运行即可
+- ToDo:暂未实现json格式核对，请自行确保导入`json["list"]`中各项符合以下标准:[Json Schema](https://uigf.org/zh/standards/SRGF.html#json-schema)

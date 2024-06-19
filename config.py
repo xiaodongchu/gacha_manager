@@ -2,4 +2,4 @@
 genshin_game_path = ("D:/software/games/mihoyo/Genshin Impact Game/"
                      "YuanShen_Data/webCaches/2.25.0.0/Cache/Cache_Data/data_2")
 star_rail_game_path = ("D:/software/games/mihoyo/StarRailGame/"
-                       "StarRail_Data/webCaches/2.24.0.0/Cache/Cache_Data/data_2")
+                       "StarRail_Data/webCaches/2.25.0.0/Cache/Cache_Data/data_2")

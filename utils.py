@@ -8,7 +8,8 @@ from time import time, localtime, strftime
 now_dir = os.path.dirname(__file__) + "/"
 genshin_save_path = now_dir + "save/genshin/"
 star_rail_save_path = now_dir + "save/star_rail/"
-logger.add(now_dir + "log/log.txt", level="INFO", encoding="utf-8", enqueue=True)
+log_file = now_dir + "log/log.txt"
+logger.add(log_file, level="DEBUG", encoding="utf-8", enqueue=True)
 genshin_id_path = now_dir + "config_jsons/genshin_id.json"
 star_rail_id_path = now_dir + "config_jsons/star_rail_id.json"
 genshin_idx = ["uigf_gacha_type", "gacha_type", "item_id", "count", "time", "name", "item_type", "rank_type", "api_id"]

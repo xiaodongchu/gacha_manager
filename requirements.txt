@@ -3,3 +3,4 @@ pyperclip
 pandas
 loguru
 openpyxl
+jsonschema

@@ -1,0 +1,229 @@
+import json
+import os
+from time import time, strftime, localtime, sleep
+from urllib.parse import urlparse, parse_qsl, urlencode
+
+import pandas
+import requests
+from loguru import logger
+from pyperclip import copy
+
+from rail.config_rail import rail_game_path, base_dir
+
+rail_save_dir = os.path.join(base_dir, "save")
+
+now_dir = os.path.dirname(__file__)
+rail_id_path = os.path.join(now_dir, "rail_id.json")
+rail_schema_path = os.path.join(now_dir, "json_schema.json")
+log_file = os.path.join(rail_save_dir, "log.txt")
+logger.add(log_file, level="DEBUG", encoding="utf-8", enqueue=True)
+
+rail_idx = ["gacha_id", "gacha_type", "item_id", "count", "time", "name", "item_type", "rank_type", "api_id"]
+
+rail_api_info = {
+    '1': "常驻",
+    '2': "新手",
+    '11': "角色",
+    '12': "光锥",
+}
+
+
+def get_rail_url():
+    rail_link_retain = ["authkey", "authkey_ver", "sign_type", "game_biz", "auth_appid", "size", "region", "win_mode", "plat_type"]
+    logger.info("正在获取崩坏：星穹铁道链接")
+    logger.debug("路径:" + rail_game_path)
+    f = open(rail_game_path, 'r', encoding='utf-8', errors='replace')
+    words = f.read()
+    f.close()
+    words = words.split('1/0/')
+    for i in range(len(words) - 1, -1, -1):
+        line = words[i]
+        if line.startswith('http') and "getGachaLog" in line:
+            url = line.split("\0")[0]
+            response = requests.get(url, headers={"Content-Type": "application/json"})
+            res = response.json()
+            if res["retcode"] == 0:
+                urp = urlparse(url)
+                parse = dict(parse_qsl(urp.query))
+                parse = {key: parse[key] for key in parse if key in rail_link_retain}
+                parse["lang"] = "zh-cn"
+                parse["page"] = "1"
+                parse["end_id"] = "0"
+                latest_url = url.split("?")[0] + "?" + urlencode(parse)
+                copy(latest_url)
+                logger.info(latest_url)
+                return latest_url
+    logger.error("未找到崩坏：星穹铁道链接")
+    return None
+
+
+def get_rail(url: str, sleep_time=0.6):
+    urp = urlparse(url)
+    parse = dict(parse_qsl(urp.query))
+    new_df = get_new_df(columns=rail_idx)
+    rail_ids = get_rail_ids()
+    uid = ""
+    for gtype, gname in rail_api_info.items():
+        page = 1
+        parse["end_id"] = "0"
+        parse["gacha_type"] = gtype
+        while True:
+            parse["page"] = str(page)
+            response = requests.get(url.split("?")[0], params=parse, headers={"Content-Type": "application/json"})
+            sleep(sleep_time)
+            res = response.json()
+            if res["retcode"] != 0:
+                raise Exception("获取失败" + res["message"])
+            res = res["data"]["list"]
+            if len(res) < 1:
+                logger.info("获取 " + " [" + gtype + "]:" + gname + " 结束")
+                break
+            if not uid:
+                uid = str(res[0]["uid"])
+                logger.info("uid: " + uid)
+            for i in res:
+                # ["gacha_id", "gacha_type", "item_id", "count", "time",
+                # "name", "item_type", "rank_type", "api_id"]
+                j = {
+                    "gacha_id": i["gacha_id"],
+                    "gacha_type": gtype,
+                    "item_id": rail_ids[i['name']],
+                    "count": i["count"],
+                    "time": i["time"],
+                    "name": i["name"],
+                    "item_type": i["item_type"],
+                    "rank_type": i["rank_type"],
+                    "api_id": i["id"]
+                }
+                # 如果api_id已经存在,报错
+                if j["api_id"] in new_df["api_id"].values:
+                    raise Exception("api_id已经存在" + str(j) + str(parse))
+                new_df.loc[len(new_df)] = j
+            parse["end_id"] = res[-1]["id"]
+            items = [i["name"] for i in res]
+            logger.info(gname + " " + str(page) + " 页," + str(items) + ",end_id:" + parse["end_id"])
+            page += 1
+    backup_and_merge_rail(uid, new_df)
+    logger.info("崩坏：星穹铁道抽卡数据更新完成:" + uid)
+
+
+def get_rail_ids():
+    rail_url = "https://api.uigf.org/dict/starrail/chs.json"
+    rail_ids = requests.get(rail_url).json()
+    write_json(rail_id_path, rail_ids)
+    return rail_ids
+
+
+def get_rail_uigf_info(uid):
+    time_now = time()
+    info = {
+        "info": {
+            "export_timestamp": int(time_now),
+            "export_app": "原神·启动",
+            "export_app_version": "0.1",
+            "version": "v4.0",
+        },
+        "hkrpg": [
+            {
+                "uid": str(uid),
+                "timezone": 8,
+                "lang": "zh-cn",
+                "list": [],
+            }
+        ],
+    }
+    return info
+
+
+def df_to_uigf_rail(df: pandas.DataFrame, uid):
+    info = get_rail_uigf_info(uid)
+    df = df.to_dict(orient="records")
+    for i in df:
+        i["id"] = i["api_id"]
+        del i["api_id"]
+    info["hkrpg"][0]["list"] = df
+    return info
+
+
+def uigf_to_df_rail(uigf_json: dict):
+    """
+
+    :param uigf_json: 须确保仅包含1个uid，且为中文
+    :return:
+    """
+    rail_ids = get_rail_ids()
+    data = uigf_json['hkrpg'][0]["list"]
+    for i in data:
+        i['item_id'] = rail_ids[i['name']]
+        i['api_id'] = i['id']
+        del i['id']
+    df = get_new_df(columns=rail_idx, dtype=str, data=data)
+    return df
+
+
+def backup_and_merge_rail(uid, new_df: pandas.DataFrame):
+    if new_df["api_id"].duplicated().any():
+        raise Exception("api_id重复")
+    uid = str(uid)
+    new_df = new_df.astype(str)
+    old_path = os.path.join(rail_save_dir, uid + ".csv")
+    if os.path.exists(old_path):
+        old_df = load_csv(old_path)
+        if set(new_df.columns) != set(old_df.columns):
+            raise Exception("列名不同" + str(set(new_df.columns)) + str(set(old_df.columns)))
+        old_backup_path = os.path.join(rail_save_dir, uid + "_backup" + ".csv")
+        try_remove(old_backup_path)
+        logger.info("备份数据:" + uid + " -> " + old_backup_path)
+        os.rename(old_path, old_backup_path)
+        logger.info("合并数据")
+        new_df = pandas.concat([new_df, old_df], ignore_index=True)
+        new_df = new_df.drop_duplicates(subset=["api_id"], keep="first", ignore_index=True)
+    logger.info(uid + "共计" + str(len(new_df)) + "条数据,排序中...")
+    new_df = new_df.sort_values(by=["time", "api_id"], ascending=False, ignore_index=True)
+    logger.info("写入csv:" + uid)
+    csv_path = os.path.join(rail_save_dir, uid + ".csv")
+    write_csv(csv_path, new_df)
+    new_json = df_to_uigf_rail(new_df, uid)
+    logger.info("写入json:" + uid)
+    json_path = os.path.join(rail_save_dir, uid + ".json")
+    write_json(json_path, new_json)
+    logger.info("写入excel:" + uid)
+    excel_path = os.path.join(rail_save_dir, uid + ".xlsx")
+    write_excel(excel_path, new_df)
+    return new_df
+
+
+def load_json(path):
+    f = open(path, "r", encoding="utf-8")
+    j = json.load(f)
+    f.close()
+    return j
+
+
+def write_json(path, j):
+    f = open(path, "w", encoding="utf-8")
+    json.dump(j, f, ensure_ascii=False, indent=4)
+    f.close()
+
+
+def load_csv(path):
+    return pandas.read_csv(path, index_col=0, encoding="utf-8", dtype=str)
+
+
+def write_csv(path, df):
+    df.to_csv(path, encoding="utf-8")
+    os.chmod(path, 0o444)
+
+
+def write_excel(path, df):
+    df.to_excel(path)
+
+
+def get_new_df(columns, dtype=str, data=None):
+    return pandas.DataFrame(columns=columns, data=data, dtype=dtype)
+
+
+def try_remove(path):
+    if os.path.exists(path):
+        os.chmod(path, 0o777)
+        os.remove(path)

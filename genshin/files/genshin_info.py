@@ -1,15 +1,13 @@
 import json
 import os
 from time import time, sleep
-from urllib.parse import urlparse, parse_qsl, urlencode
+from urllib.parse import urlparse, parse_qsl
 
 import pandas
 import requests
 from loguru import logger
-from pyperclip import copy
 
-from genshin.config_genshin import genshin_game_path, base_dir
-
+from genshin.config_genshin import base_dir
 
 genshin_save_dir = os.path.join(base_dir, "save")
 
@@ -28,35 +26,6 @@ genshin_api_info = {
     "302": "武器活动祈愿",
     "500": "集录祈愿"
 }
-
-
-def get_genshin_url():
-    genshin_link_retain = ["authkey", "authkey_ver", "sign_type", "game_biz", "auth_appid", "size", "region", "win_mode", "device_type"]
-    logger.info("正在获取原神链接")
-    logger.debug("路径:"+genshin_game_path)
-    f = open(genshin_game_path, 'r', encoding='utf-8', errors='replace')
-    words = f.read()
-    f.close()
-    words = words.split('1/0/')
-    for i in range(len(words) - 1, -1, -1):
-        line = words[i]
-        if line.startswith('http') and "getGachaLog" in line:
-            url = line.split("\0")[0]
-            response = requests.get(url, headers={"Content-Type": "application/json"})
-            res = response.json()
-            if res["retcode"] == 0:
-                urp = urlparse(url)
-                parse = dict(parse_qsl(urp.query))
-                parse = {key: parse[key] for key in parse if key in genshin_link_retain}
-                parse["lang"] = "zh-cn"
-                parse["page"] = "1"
-                parse["end_id"] = "0"
-                latest_url = url.split("?")[0] + "?" + urlencode(parse)
-                copy(latest_url)
-                logger.info(latest_url)
-                return latest_url
-    logger.error("未找到原神链接")
-    return None
 
 
 def get_genshin(url: str, sleep_time=0.6):
@@ -78,11 +47,11 @@ def get_genshin(url: str, sleep_time=0.6):
                 raise Exception("获取失败" + res["message"])
             res = res["data"]["list"]
             if len(res) < 1:
-                logger.info("获取 "+" ["+gtype+"]:"+gname+" 结束")
+                logger.info("获取 " + " [" + gtype + "]:" + gname + " 结束")
                 break
             if not uid:
                 uid = str(res[0]["uid"])
-                logger.info("uid: "+uid)
+                logger.info("uid: " + uid)
             for i in res:
                 # ["uigf_gacha_type", "gacha_type", "item_id", "count", "time",
                 # "name", "item_type", "rank_type", "api_id"]
@@ -99,14 +68,14 @@ def get_genshin(url: str, sleep_time=0.6):
                 }
                 # 如果api_id已经存在,报错
                 if j["api_id"] in new_df["api_id"].values:
-                    raise Exception("api_id已经存在"+str(j)+str(parse))
+                    raise Exception("api_id已经存在" + str(j) + str(parse))
                 new_df.loc[len(new_df)] = j
             parse["end_id"] = res[-1]["id"]
             items = [i["name"] for i in res]
-            logger.info(gname+" "+str(page)+" 页,"+str(items)+",end_id: "+parse["end_id"])
+            logger.info(gname + " " + str(page) + " 页," + str(items) + ",end_id: " + parse["end_id"])
             page += 1
     backup_and_merge_genshin(uid, new_df)
-    logger.info("原神抽卡数据更新完成:"+uid)
+    logger.info("原神抽卡数据更新完成:" + uid)
 
 
 def get_genshin_ids():
@@ -180,7 +149,7 @@ def backup_and_merge_genshin(uid, new_df: pandas.DataFrame):
         logger.info("合并数据")
         new_df = pandas.concat([new_df, old_df], ignore_index=True)
         new_df = new_df.drop_duplicates(subset=["api_id"], keep="first", ignore_index=True)
-    logger.info(uid+"共计"+str(len(new_df))+"条数据,排序中...")
+    logger.info(uid + "共计" + str(len(new_df)) + "条数据,排序中...")
     new_df = new_df.sort_values(by=["time", "api_id"], ascending=False, ignore_index=True)
     update_df(new_df)
     logger.info("写入csv:" + uid)

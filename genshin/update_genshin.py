@@ -1,4 +1,5 @@
-from files.genshin_info import get_genshin_url, get_genshin
+from files.genshin_info import get_genshin
+from url_genshin import get_genshin_url
 
 sleep_time = 0.6
 url = get_genshin_url()

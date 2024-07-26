@@ -16,4 +16,3 @@ def import_rail(ugif_path):
 if __name__ == '__main__':
     path = r"D:\programming\yuanshen\gacha_manager\rail\save\104876574.json"  # 导入uigf的绝对路径
     import_rail(path)
-

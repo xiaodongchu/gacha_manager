@@ -28,7 +28,7 @@ pip install -r requirements.txt
 - 在`config_genshin.py`中仿照示例，找到自己对应游戏的`data_2`日志路径:
 - 原神:启动
 - 在游戏中抽卡历史记录界面翻几页
-- 运行`update_genshin.py`中的`get_genshin_url()`函数
+- 运行`url_genshin.py`
 - 链接会自动复制入剪切板，您也可查看控制台输出，或从`/genshin/save/log.txt`中复制
 
 #### 崩坏：星穹铁道
@@ -36,7 +36,7 @@ pip install -r requirements.txt
 - 在`config_rail.py`中仿照示例，找到自己对应游戏的`data_2`日志路径:
 - 崩坏：星穹铁道:启动
 - 在游戏中抽卡历史记录界面翻几页
-- 运行`update_rail.py`中的`get_rail_url()`函数
+- 运行`url_rail.py`
 - 链接会自动复制入剪切板，您也可查看控制台输出，或从`/rail/save/log.txt`中复制
 
 ### 更新数据

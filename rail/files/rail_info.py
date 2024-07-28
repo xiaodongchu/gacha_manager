@@ -1,7 +1,8 @@
 import json
 import os
+import shutil
 from time import time, sleep
-from urllib.parse import urlparse, parse_qsl
+from urllib.parse import urlparse, parse_qsl, urlencode
 
 import pandas
 import requests
@@ -10,11 +11,12 @@ from loguru import logger
 from rail.config_rail import base_dir
 
 rail_save_dir = os.path.join(base_dir, "save")
+backup_dir = os.path.join(os.path.dirname(base_dir), "backup")
 
 now_dir = os.path.dirname(__file__)
 rail_id_path = os.path.join(now_dir, "rail_id.json")
 rail_schema_path = os.path.join(now_dir, "json_schema.json")
-log_file = os.path.join(rail_save_dir, "log.txt")
+log_file = os.path.join(backup_dir, "log_rail.txt")
 logger.add(log_file, level="DEBUG", encoding="utf-8", enqueue=True)
 
 rail_idx = ["gacha_id", "gacha_type", "item_id", "count", "time", "name", "item_type", "rank_type", "api_id"]
@@ -29,6 +31,7 @@ rail_api_info = {
 
 def get_rail(url: str, sleep_time=0.6):
     urp = urlparse(url)
+    url = url.split("?")[0]
     parse = dict(parse_qsl(urp.query))
     new_df = get_new_df(columns=rail_idx)
     rail_ids = get_rail_ids()
@@ -39,9 +42,11 @@ def get_rail(url: str, sleep_time=0.6):
         parse["gacha_type"] = gtype
         while True:
             parse["page"] = str(page)
-            response = requests.get(url.split("?")[0], params=parse, headers={"Content-Type": "application/json"})
-            sleep(sleep_time)
+            new_url = url + "?" + urlencode(parse)
+            logger.debug(new_url)
+            response = requests.get(new_url, headers={"Content-Type": "application/json"})
             res = response.json()
+            sleep(sleep_time)
             if res["retcode"] != 0:
                 raise Exception("获取失败" + res["message"])
             res = res["data"]["list"]
@@ -56,7 +61,7 @@ def get_rail(url: str, sleep_time=0.6):
                 # "name", "item_type", "rank_type", "api_id"]
                 j = {
                     "gacha_id": i["gacha_id"],
-                    "gacha_type": gtype,
+                    "gacha_type": gtype,  # ugif
                     "item_id": rail_ids[i['name']],
                     "count": i["count"],
                     "time": i["time"],
@@ -77,11 +82,36 @@ def get_rail(url: str, sleep_time=0.6):
     logger.info("崩坏：星穹铁道抽卡数据更新完成:" + uid)
 
 
-def get_rail_ids():
-    rail_url = "https://api.uigf.org/dict/starrail/chs.json"
-    rail_ids = requests.get(rail_url).json()
-    write_json(rail_id_path, rail_ids)
-    return rail_ids
+def backup_and_merge_rail(uid, new_df: pandas.DataFrame):
+    if new_df["api_id"].duplicated().any():
+        raise Exception("api_id重复")
+    uid = str(uid)
+    new_df = new_df.astype(str)
+    old_path = os.path.join(rail_save_dir, uid + ".csv")
+    if os.path.exists(old_path):
+        old_df = load_csv(old_path)
+        if set(new_df.columns) != set(old_df.columns):
+            raise Exception("列名不同" + str(set(new_df.columns)) + str(set(old_df.columns)))
+        old_backup_path = os.path.join(backup_dir, str(uid + "_backup_" + str(int(time())) + ".csv"))
+        logger.info("备份数据:" + uid + " -> " + old_backup_path)
+        try_rename(old_path, old_backup_path)
+        logger.info("合并数据")
+        new_df = pandas.concat([new_df, old_df], ignore_index=True)
+        new_df = new_df.drop_duplicates(subset=["api_id"], keep="first", ignore_index=True)
+    logger.info(uid + "共计" + str(len(new_df)) + "条数据,排序中...")
+    new_df = new_df.sort_values(by=["time", "api_id"], ascending=False, ignore_index=True)
+    update_df(new_df)
+    logger.info("写入csv:" + uid)
+    csv_path = os.path.join(rail_save_dir, uid + ".csv")
+    write_csv(csv_path, new_df)
+    new_json = df_to_uigf_rail(new_df, uid)
+    logger.info("写入json:" + uid)
+    json_path = os.path.join(rail_save_dir, uid + ".json")
+    write_json(json_path, new_json)
+    logger.info("写入excel:" + uid)
+    excel_path = os.path.join(rail_save_dir, uid + ".xlsx")
+    write_excel(excel_path, new_df)
+    return new_df
 
 
 def get_rail_uigf_info(uid):
@@ -131,36 +161,11 @@ def uigf_to_df_rail(uigf_json: dict):
     return df
 
 
-def backup_and_merge_rail(uid, new_df: pandas.DataFrame):
-    if new_df["api_id"].duplicated().any():
-        raise Exception("api_id重复")
-    uid = str(uid)
-    new_df = new_df.astype(str)
-    old_path = os.path.join(rail_save_dir, uid + ".csv")
-    if os.path.exists(old_path):
-        old_df = load_csv(old_path)
-        if set(new_df.columns) != set(old_df.columns):
-            raise Exception("列名不同" + str(set(new_df.columns)) + str(set(old_df.columns)))
-        old_backup_path = os.path.join(rail_save_dir, uid + "_backup" + ".csv")
-        try_remove(old_backup_path)
-        logger.info("备份数据:" + uid + " -> " + old_backup_path)
-        os.rename(old_path, old_backup_path)
-        logger.info("合并数据")
-        new_df = pandas.concat([new_df, old_df], ignore_index=True)
-        new_df = new_df.drop_duplicates(subset=["api_id"], keep="first", ignore_index=True)
-    logger.info(uid + "共计" + str(len(new_df)) + "条数据,排序中...")
-    new_df = new_df.sort_values(by=["time", "api_id"], ascending=False, ignore_index=True)
-    logger.info("写入csv:" + uid)
-    csv_path = os.path.join(rail_save_dir, uid + ".csv")
-    write_csv(csv_path, new_df)
-    new_json = df_to_uigf_rail(new_df, uid)
-    logger.info("写入json:" + uid)
-    json_path = os.path.join(rail_save_dir, uid + ".json")
-    write_json(json_path, new_json)
-    logger.info("写入excel:" + uid)
-    excel_path = os.path.join(rail_save_dir, uid + ".xlsx")
-    write_excel(excel_path, new_df)
-    return new_df
+def get_rail_ids():
+    rail_url = "https://api.uigf.org/dict/starrail/chs.json"
+    rail_ids = requests.get(rail_url).json()
+    write_json(rail_id_path, rail_ids)
+    return rail_ids
 
 
 def load_json(path):
@@ -193,7 +198,13 @@ def get_new_df(columns, dtype=str, data=None):
     return pandas.DataFrame(columns=columns, data=data, dtype=dtype)
 
 
-def try_remove(path):
-    if os.path.exists(path):
-        os.chmod(path, 0o777)
-        os.remove(path)
+def try_rename(old_file, new_path):
+    if os.path.exists(old_file) and not os.path.exists(new_path) and os.path.isfile(old_file):
+        os.chmod(old_file, 0o777)
+        shutil.move(old_file, new_path)
+    else:
+        raise Exception("文件备份错误")
+
+
+def update_df(df: pandas.DataFrame):
+    return

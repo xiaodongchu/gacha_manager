@@ -37,7 +37,7 @@
         "version"
       ]
     },
-    "hkrpg": {
+    "nap": {
       "type": "array",
       "minItems": 1,
       "maxItems": 1,
@@ -80,8 +80,8 @@
                   "enum": [
                     "1",
                     "2",
-                    "11",
-                    "12"
+                    "3",
+                    "5"
                   ]
                 },
                 "item_id": {
@@ -115,9 +115,8 @@
               },
               "required": [
                 "gacha_type",
-                "gacha_id",
-                "time",
                 "item_id",
+                "time",
                 "id"
               ]
             }
@@ -133,6 +132,6 @@
   },
   "required": [
     "info",
-    "hkrpg"
+    "nap"
   ]
 }

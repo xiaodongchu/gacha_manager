@@ -8,7 +8,8 @@ from files.zzz_info import logger
 
 
 def get_zzz_url():
-    zzz_link_retain = ["authkey", "authkey_ver", "sign_type", "game_biz", "auth_appid", "size", "region", "win_mode", "device_type"]
+    zzz_link_retain = ["authkey", "authkey_ver", "sign_type", "game_biz", "auth_appid",
+                       "size", "region", "win_mode", "device_type"]
     logger.info("正在获取绝区零链接")
     logger.debug("路径:" + zzz_game_path)
     f = open(zzz_game_path, 'r', encoding='utf-8', errors='replace')

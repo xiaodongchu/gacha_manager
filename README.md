@@ -80,7 +80,7 @@ pip install -r requirements.txt
 
 ### 导入数据
 
-- 支持符合[UIGF](https://uigf.org/zh/standards/uigf.html)的JSON文件导入
+- 支持符合[UIGF-4.0](https://uigf.org/zh/standards/uigf.html)的JSON文件导入
 - 请自行确保导入各项符合以下标准：[Json Schema](https://uigf.org/zh/standards/uigf.html#json-schema)
 
 #### 原神

@@ -207,6 +207,6 @@ def try_rename(old_file, new_path):
         raise Exception("文件备份错误")
 
 
-def update_df(df):
+def update_df(df: pandas.DataFrame):
     # uigf_gacha_type列中的400改为301
     df.replace({"uigf_gacha_type": {"400": "301"}}, inplace=True)

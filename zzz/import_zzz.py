@@ -7,7 +7,7 @@ def import_zzz(ugif_path):
     schema = load_json(zzz_schema_path)
     new_ugif = load_json(ugif_path)
     validate(instance=new_ugif, schema=schema)
-    uid = str(new_ugif["nap"][0]["uid"])
+    uid = str(int(new_ugif["nap"][0]["uid"]))
     new_df = uigf_to_df_zzz(new_ugif)
     backup_and_merge_zzz(uid, new_df)
     logger.info("绝区零抽卡数据导入完成:" + uid)

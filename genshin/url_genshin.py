@@ -8,7 +8,8 @@ from files.genshin_info import logger
 
 
 def get_genshin_url():
-    genshin_link_retain = ["authkey", "authkey_ver", "sign_type", "game_biz", "auth_appid", "size", "region", "win_mode", "device_type"]
+    genshin_link_retain = ["authkey", "authkey_ver", "sign_type", "game_biz", "auth_appid",
+                           "size", "region", "win_mode", "device_type"]
     logger.info("正在获取原神链接")
     logger.debug("路径:" + genshin_game_path)
     f = open(genshin_game_path, 'r', encoding='utf-8', errors='replace')

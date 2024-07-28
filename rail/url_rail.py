@@ -8,7 +8,8 @@ from files.rail_info import logger
 
 
 def get_rail_url():
-    rail_link_retain = ["authkey", "authkey_ver", "sign_type", "game_biz", "auth_appid", "size", "region", "win_mode", "plat_type"]
+    rail_link_retain = ["authkey", "authkey_ver", "sign_type", "game_biz", "auth_appid",
+                        "size", "region", "win_mode", "plat_type"]
     logger.info("正在获取崩坏：星穹铁道链接")
     logger.debug("路径:" + rail_game_path)
     f = open(rail_game_path, 'r', encoding='utf-8', errors='replace')
@@ -34,3 +35,7 @@ def get_rail_url():
                 return latest_url
     logger.error("未找到崩坏：星穹铁道链接")
     return None
+
+
+if __name__ == "__main__":
+    get_rail_url()

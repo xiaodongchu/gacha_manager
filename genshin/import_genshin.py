@@ -7,7 +7,7 @@ def import_genshin(ugif_path):
     schema = load_json(genshin_schema_path)
     new_ugif = load_json(ugif_path)
     validate(instance=new_ugif, schema=schema)
-    uid = str(new_ugif["hk4e"][0]["uid"])
+    uid = str(int(new_ugif["hk4e"][0]["uid"]))
     new_df = uigf_to_df_genshin(new_ugif)
     backup_and_merge_genshin(uid, new_df)
     logger.info("原神抽卡数据导入完成:" + uid)

@@ -163,9 +163,14 @@ def uigf_to_df_rail(uigf_json: dict):
 
 def get_rail_ids():
     rail_url = "https://api.uigf.org/dict/starrail/chs.json"
-    rail_ids = requests.get(rail_url).json()
-    write_json(rail_id_path, rail_ids)
-    return rail_ids
+    try:
+        rail_ids = requests.get(rail_url).json()
+        if len(rail_ids) > 10:
+            write_json(rail_id_path, rail_ids)
+            return rail_ids
+    except:
+        pass
+    return load_json(rail_id_path)
 
 
 def load_json(path):

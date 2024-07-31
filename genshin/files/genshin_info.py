@@ -164,9 +164,14 @@ def uigf_to_df_genshin(uigf_json: dict):
 
 def get_genshin_ids():
     genshin_url = "https://api.uigf.org/dict/genshin/chs.json"
-    genshin_ids = requests.get(genshin_url).json()
-    write_json(genshin_id_path, genshin_ids)
-    return genshin_ids
+    try:
+        genshin_ids = requests.get(genshin_url).json()
+        if len(genshin_ids) > 10:
+            write_json(genshin_id_path, genshin_ids)
+            return genshin_ids
+    except:
+        pass
+    return load_json(genshin_id_path)
 
 
 def load_json(path):

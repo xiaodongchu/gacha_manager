@@ -95,9 +95,9 @@ def backup_and_merge_zzz(uid, new_df: pandas.DataFrame):
         try_rename(old_path, old_backup_path)
         logger.info("合并数据")
         new_df = pandas.concat([new_df, old_df], ignore_index=True)
-        new_df = new_df.drop_duplicates(subset=["api_id"], keep="first", ignore_index=True)
+        new_df.drop_duplicates(subset=["api_id"], keep="first", ignore_index=True, inplace=True)
     logger.info(uid + "共计" + str(len(new_df)) + "条数据,排序中...")
-    new_df = new_df.sort_values(by=["time", "api_id"], ascending=False, ignore_index=True)
+    new_df.sort_values(by=["time", "api_id"], ascending=False, ignore_index=True, inplace=True)
     update_df(new_df)
     logger.info("写入csv:" + uid)
     csv_path = os.path.join(zzz_save_dir, uid + ".csv")
@@ -190,7 +190,7 @@ def get_new_df(columns, dtype=str, data=None):
 def try_rename(old_file, new_path):
     if os.path.exists(old_file) and not os.path.exists(new_path) and os.path.isfile(old_file):
         os.chmod(old_file, 0o777)
-        shutil.move(old_file, new_path)
+        shutil.copy(old_file, new_path)
     else:
         raise Exception("文件备份错误")
 

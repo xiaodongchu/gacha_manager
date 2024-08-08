@@ -1,13 +1,11 @@
-import json
-import shutil
-from time import time, sleep
 from collections import Counter
+from time import time, sleep
 
-import pandas
 import requests
 from loguru import logger
 
 from waves.config_waves import *
+from waves.files.base_func import *
 
 waves_save_dir = os.path.join(base_dir, "save")
 backup_dir = os.path.join(os.path.dirname(base_dir), "backup")
@@ -71,7 +69,7 @@ def merge_waves(old_df: pandas.DataFrame, new_df: pandas.DataFrame):
                     j_index = new_df_i[(new_df_i["time"] == row["time"]) & (new_df_i["name"] == j)].index[0]
                     new_df_i.drop(index=j_index, inplace=True)
                 keep_time.append(row["time"])
-                logger.error("卡池名称："+gname+" 时间："+row["time"]+" 数据合并可能有误")
+                logger.error("卡池名称：" + gname + " 时间：" + row["time"] + " 数据合并可能有误")
             break
         new_df_i = new_df_i[new_df_i["time"].isin(keep_time)]
         old_df = pandas.concat([old_df, new_df_i], ignore_index=True)
@@ -131,44 +129,6 @@ def df_to_dict_waves(df: pandas.DataFrame, uid: str):
 def dict_to_df_waves(d: dict):
     data = d["list"]
     return pandas.DataFrame(columns=waves_idx, dtype=str, data=data)
-
-
-def load_json(path):
-    f = open(path, "r", encoding="utf-8")
-    j = json.load(f)
-    f.close()
-    return j
-
-
-def write_json(path, j):
-    f = open(path, "w", encoding="utf-8")
-    json.dump(j, f, ensure_ascii=False, indent=4)
-    f.close()
-
-
-def load_csv(path):
-    return pandas.read_csv(path, index_col=0, encoding="utf-8", dtype=str)
-
-
-def write_csv(path, df):
-    df.to_csv(path, encoding="utf-8")
-    os.chmod(path, 0o444)
-
-
-def write_excel(path, df):
-    df.to_excel(path)
-
-
-def get_new_df(columns, dtype=str, data=None):
-    return pandas.DataFrame(columns=columns, data=data, dtype=dtype)
-
-
-def try_rename(old_file, new_path):
-    if os.path.exists(old_file) and not os.path.exists(new_path) and os.path.isfile(old_file):
-        os.chmod(old_file, 0o777)
-        shutil.copy(old_file, new_path)
-    else:
-        raise Exception("文件备份错误")
 
 
 def update_df(df: pandas.DataFrame):

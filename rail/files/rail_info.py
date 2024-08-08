@@ -1,14 +1,11 @@
-import json
-import os
-import shutil
 from time import time, sleep
 from urllib.parse import urlparse, parse_qsl, urlencode
 
-import pandas
 import requests
 from loguru import logger
 
 from rail.config_rail import base_dir
+from rail.files.base_func import *
 
 rail_save_dir = os.path.join(base_dir, "save")
 backup_dir = os.path.join(os.path.dirname(base_dir), "backup")
@@ -18,6 +15,8 @@ rail_id_path = os.path.join(now_dir, "rail_id.json")
 rail_schema_path = os.path.join(now_dir, "json_schema.json")
 log_file = os.path.join(backup_dir, "log_rail.txt")
 logger.add(log_file, level="DEBUG", encoding="utf-8", enqueue=True)
+
+rail_ids = load_json(rail_id_path)
 
 rail_idx = ["gacha_id", "gacha_type", "item_id", "count", "time", "name", "item_type", "rank_type", "api_id"]
 
@@ -34,7 +33,6 @@ def get_rail(url: str, sleep_time=0.6):
     url = url.split("?")[0]
     parse = dict(parse_qsl(urp.query))
     new_df = get_new_df(columns=rail_idx)
-    rail_ids = get_rail_ids()
     uid = ""
     for gtype, gname in rail_api_info.items():
         page = 1
@@ -62,7 +60,7 @@ def get_rail(url: str, sleep_time=0.6):
                 j = {
                     "gacha_id": i["gacha_id"],
                     "gacha_type": gtype,  # ugif
-                    "item_id": rail_ids[i['name']],
+                    "item_id": get_id_by_name(i['name']),
                     "count": i["count"],
                     "time": i["time"],
                     "name": i["name"],
@@ -151,65 +149,61 @@ def uigf_to_df_rail(uigf_json: dict):
     :param uigf_json: 须确保仅包含1个uid，且为中文
     :return:
     """
-    rail_ids = get_rail_ids()
     data = uigf_json['hkrpg'][0]["list"]
     for i in data:
-        i['item_id'] = rail_ids[i['name']]
+        i['item_id'] = get_id_by_name(i['name'])
         i['api_id'] = i['id']
         del i['id']
     df = get_new_df(columns=rail_idx, dtype=str, data=data)
     return df
 
 
-def get_rail_ids():
-    rail_url = "https://api.uigf.org/dict/starrail/chs.json"
-    try:
-        rail_ids = requests.get(rail_url).json()
-        if len(rail_ids) > 10:
-            write_json(rail_id_path, rail_ids)
-            return rail_ids
-    except:
-        pass
-    return load_json(rail_id_path)
-
-
-def load_json(path):
-    f = open(path, "r", encoding="utf-8")
-    j = json.load(f)
-    f.close()
-    return j
-
-
-def write_json(path, j):
-    f = open(path, "w", encoding="utf-8")
-    json.dump(j, f, ensure_ascii=False, indent=4)
-    f.close()
-
-
-def load_csv(path):
-    return pandas.read_csv(path, index_col=0, encoding="utf-8", dtype=str)
-
-
-def write_csv(path, df):
-    df.to_csv(path, encoding="utf-8")
-    os.chmod(path, 0o444)
-
-
-def write_excel(path, df):
-    df.to_excel(path)
-
-
-def get_new_df(columns, dtype=str, data=None):
-    return pandas.DataFrame(columns=columns, data=data, dtype=dtype)
-
-
-def try_rename(old_file, new_path):
-    if os.path.exists(old_file) and not os.path.exists(new_path) and os.path.isfile(old_file):
-        os.chmod(old_file, 0o777)
-        shutil.copy(old_file, new_path)
-    else:
-        raise Exception("文件备份错误")
-
-
 def update_df(df: pandas.DataFrame):
     return
+
+
+def get_id_by_name(name: str):
+    global rail_ids
+    if name in rail_ids:
+        return rail_ids[name]
+    rail_ids = get_rail_ids()
+    return rail_ids[name]
+
+
+def get_rail_ids():
+    global rail_ids
+    target_host = "https://raw.githubusercontent.com/Dimbreath/StarRailData/master/"
+    avatar_config_file = "ExcelOutput/AvatarConfig.json"
+    weapon_config_file = "ExcelOutput/EquipmentConfig.json"
+    avatar_excel_config_data = json.loads(requests.get(target_host + avatar_config_file).text)
+    weapon_excel_config_data = json.loads(requests.get(target_host + weapon_config_file).text)
+    chs_dict = json.loads(requests.get(target_host + "TextMap/TextMapCHS.json").text)
+    try:
+        for item in avatar_excel_config_data:
+            try:
+                item_id = str(item['AvatarID'])
+                hash_id = item['AvatarName']['Hash']
+                if hash_id not in chs_dict:
+                    hash_id = str(hash_id)
+                if hash_id in chs_dict and item_id:
+                    name = str(chs_dict[hash_id])
+                    if len(name) > 0:
+                        rail_ids[name] = item_id
+            except Exception as e:
+                logger.error(e)
+        for item in weapon_excel_config_data:
+            try:
+                item_id = str(item['EquipmentID'])
+                hash_id = item['EquipmentName']['Hash']
+                if hash_id not in chs_dict:
+                    hash_id = str(hash_id)
+                if hash_id in chs_dict and item_id:
+                    name = str(chs_dict[hash_id])
+                    if len(name) > 0:
+                        rail_ids[name] = item_id
+            except Exception as e:
+                logger.error(e)
+        write_json(rail_id_path, rail_ids)
+    except:
+        pass
+    return rail_ids

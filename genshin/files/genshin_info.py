@@ -1,4 +1,5 @@
 from time import time, sleep
+from copy import deepcopy
 from urllib.parse import urlparse, parse_qsl, urlencode
 
 import requests
@@ -174,6 +175,7 @@ def get_id_by_name(name: str):
 
 def get_genshin_ids():
     global genshin_ids
+    genshin_ids_copy = deepcopy(genshin_ids)
     target_host = "https://raw.githubusercontent.com/Masterain98/GenshinData/main/"
     avatar_config_file = "AvatarExcelConfigData.json"
     weapon_config_file = "WeaponExcelConfigData.json"
@@ -191,9 +193,10 @@ def get_genshin_ids():
                     if hash_id in chs_dict and item_id:
                         name = str(chs_dict[hash_id])
                         if len(name) > 0:
-                            genshin_ids[name] = item_id
+                            genshin_ids_copy[name] = item_id
                 except Exception as e:
                     logger.error(e)
+        genshin_ids = genshin_ids_copy
         write_json(genshin_id_path, genshin_ids)
     except:
         pass

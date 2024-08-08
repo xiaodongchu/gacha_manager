@@ -1,4 +1,5 @@
 from time import time, sleep
+from copy import deepcopy
 from urllib.parse import urlparse, parse_qsl, urlencode
 
 import requests
@@ -172,6 +173,7 @@ def get_id_by_name(name: str):
 
 def get_rail_ids():
     global rail_ids
+    rail_ids_new = deepcopy(rail_ids)
     target_host = "https://raw.githubusercontent.com/Dimbreath/StarRailData/master/"
     avatar_config_file = "ExcelOutput/AvatarConfig.json"
     weapon_config_file = "ExcelOutput/EquipmentConfig.json"
@@ -188,7 +190,7 @@ def get_rail_ids():
                 if hash_id in chs_dict and item_id:
                     name = str(chs_dict[hash_id])
                     if len(name) > 0:
-                        rail_ids[name] = item_id
+                        rail_ids_new[name] = item_id
             except Exception as e:
                 logger.error(e)
         for item in weapon_excel_config_data:
@@ -200,9 +202,10 @@ def get_rail_ids():
                 if hash_id in chs_dict and item_id:
                     name = str(chs_dict[hash_id])
                     if len(name) > 0:
-                        rail_ids[name] = item_id
+                        rail_ids_new[name] = item_id
             except Exception as e:
                 logger.error(e)
+        rail_ids = rail_ids_new
         write_json(rail_id_path, rail_ids)
     except:
         pass

@@ -1,8 +1,8 @@
 import os
 
 
-# 鸣潮游戏日志绝对路径
-waves_gane_path = "D:/software/games/Wuthering Waves/Wuthering Waves Game/Client/Saved/Logs/Client.log"
+# 鸣潮游戏日志文件夹绝对路径
+waves_game_path = "D:/software/games/Wuthering Waves/Wuthering Waves Game/Client/Saved/Logs/"
 # 当前路径，无需修改
 base_dir = os.path.dirname(__file__)
 # 用户uid，若不配置，会从日志中自动获取

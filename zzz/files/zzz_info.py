@@ -94,7 +94,7 @@ def backup_and_merge_zzz(uid, new_df: pandas.DataFrame):
         new_df = pandas.concat([new_df, old_df], ignore_index=True)
         new_df.drop_duplicates(subset=["api_id"], keep="first", ignore_index=True, inplace=True)
     logger.info(uid + "共计" + str(len(new_df)) + "条数据,排序中...")
-    new_df.sort_values(by=["time", "api_id"], ascending=False, ignore_index=True, inplace=True)
+    new_df.sort_values(by=["time", "api_id"], ascending=True, ignore_index=True, inplace=True)
     update_df(new_df)
     logger.info("写入csv:" + uid)
     csv_path = os.path.join(zzz_save_dir, uid + ".csv")

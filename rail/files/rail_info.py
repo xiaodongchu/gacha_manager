@@ -1,5 +1,5 @@
-from time import time, sleep
 from copy import deepcopy
+from time import time, sleep
 from urllib.parse import urlparse, parse_qsl, urlencode
 
 import requests
@@ -98,7 +98,7 @@ def backup_and_merge_rail(uid, new_df: pandas.DataFrame):
         new_df = pandas.concat([new_df, old_df], ignore_index=True)
         new_df.drop_duplicates(subset=["api_id"], keep="first", ignore_index=True, inplace=True)
     logger.info(uid + "共计" + str(len(new_df)) + "条数据,排序中...")
-    new_df.sort_values(by=["time", "api_id"], ascending=False, ignore_index=True, inplace=True)
+    new_df.sort_values(by=["time", "api_id"], ascending=True, ignore_index=True, inplace=True)
     update_df(new_df)
     logger.info("写入csv:" + uid)
     csv_path = os.path.join(rail_save_dir, uid + ".csv")
@@ -174,12 +174,15 @@ def get_id_by_name(name: str):
 def get_rail_ids():
     global rail_ids
     rail_ids_new = deepcopy(rail_ids)
-    target_host = "https://raw.githubusercontent.com/Dimbreath/StarRailData/master/"
+    target_host = "https://raw.githubusercontent.com/iam-akuzihs/StarRailData/master/"
     avatar_config_file = "ExcelOutput/AvatarConfig.json"
     weapon_config_file = "ExcelOutput/EquipmentConfig.json"
-    avatar_excel_config_data = json.loads(requests.get(target_host + avatar_config_file).text)
-    weapon_excel_config_data = json.loads(requests.get(target_host + weapon_config_file).text)
-    chs_dict = json.loads(requests.get(target_host + "TextMap/TextMapCHS.json").text)
+    avatar_excel_config_data_text = requests.get(target_host + avatar_config_file).text
+    weapon_excel_config_data_text = requests.get(target_host + weapon_config_file).text
+    chs_dict_text = requests.get(target_host + "TextMap/TextMapCHS.json").text
+    avatar_excel_config_data = json.loads(avatar_excel_config_data_text)
+    weapon_excel_config_data = json.loads(weapon_excel_config_data_text)
+    chs_dict = json.loads(chs_dict_text)
     try:
         for item in avatar_excel_config_data:
             try:
@@ -190,7 +193,7 @@ def get_rail_ids():
                 if hash_id in chs_dict and item_id:
                     name = str(chs_dict[hash_id])
                     if len(name) > 0:
-                        rail_ids_new[name] = item_id
+                        rail_ids_new[name] = int(item_id)
             except Exception as e:
                 logger.error(e)
         for item in weapon_excel_config_data:
@@ -202,11 +205,16 @@ def get_rail_ids():
                 if hash_id in chs_dict and item_id:
                     name = str(chs_dict[hash_id])
                     if len(name) > 0:
-                        rail_ids_new[name] = item_id
+                        rail_ids_new[name] = int(item_id)
             except Exception as e:
                 logger.error(e)
-        rail_ids = rail_ids_new
+        rail_ids_new = sorted(rail_ids_new.items(), key=lambda x: int(x[1]))
+        rail_ids = {i[0]: str(i[1]) for i in rail_ids_new}
         write_json(rail_id_path, rail_ids)
-    except:
-        pass
+    except Exception as e:
+        logger.error(e)
     return rail_ids
+
+
+if __name__ == '__main__':
+    get_rail_ids()

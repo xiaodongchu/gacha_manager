@@ -29,6 +29,8 @@ genshin_api_info = {
     "500": "集录祈愿"
 }
 
+has_get_genshin_ids = False
+
 
 def get_genshin(url: str, sleep_time=0.6):
     urp = urlparse(url)
@@ -170,11 +172,16 @@ def get_id_by_name(name: str):
     if name in genshin_ids:
         return genshin_ids[name]
     genshin_ids = get_genshin_ids()
-    return genshin_ids[name]
+    if name in genshin_ids:
+        return genshin_ids[name]
+    return "未知角色"
 
 
 def get_genshin_ids():
-    global genshin_ids
+    global genshin_ids, has_get_genshin_ids
+    if has_get_genshin_ids:
+        return genshin_ids
+    has_get_genshin_ids = True
     genshin_ids_copy = deepcopy(genshin_ids)
     target_host = "https://raw.githubusercontent.com/Masterain98/GenshinData/main/"
     avatar_config_file = "AvatarExcelConfigData.json"

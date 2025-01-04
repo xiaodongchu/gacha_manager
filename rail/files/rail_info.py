@@ -28,6 +28,8 @@ rail_api_info = {
     '12': "光锥",
 }
 
+has_get_rail_ids = False
+
 
 def get_rail(url: str, sleep_time=0.6):
     urp = urlparse(url)
@@ -168,11 +170,16 @@ def get_id_by_name(name: str):
     if name in rail_ids:
         return rail_ids[name]
     rail_ids = get_rail_ids()
-    return rail_ids[name]
+    if name in rail_ids:
+        return rail_ids[name]
+    return "未知角色"
 
 
 def get_rail_ids():
-    global rail_ids
+    global rail_ids, has_get_rail_ids
+    if has_get_rail_ids:
+        return rail_ids
+    has_get_rail_ids = True
     rail_ids_new = deepcopy(rail_ids)
     target_host = "https://raw.githubusercontent.com/iam-akuzihs/StarRailData/master/"
     avatar_config_file = "ExcelOutput/AvatarConfig.json"

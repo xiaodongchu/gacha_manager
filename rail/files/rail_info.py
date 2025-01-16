@@ -1,4 +1,3 @@
-from copy import deepcopy
 from time import time, sleep
 from urllib.parse import urlparse, parse_qsl, urlencode
 
@@ -180,43 +179,13 @@ def get_rail_ids():
     if has_get_rail_ids:
         return rail_ids
     has_get_rail_ids = True
-    rail_ids_new = deepcopy(rail_ids)
-    target_host = "https://raw.githubusercontent.com/iam-akuzihs/StarRailData/master/"
-    avatar_config_file = "ExcelOutput/AvatarConfig.json"
-    weapon_config_file = "ExcelOutput/EquipmentConfig.json"
-    avatar_excel_config_data_text = requests.get(target_host + avatar_config_file).text
-    weapon_excel_config_data_text = requests.get(target_host + weapon_config_file).text
-    chs_dict_text = requests.get(target_host + "TextMap/TextMapCHS.json").text
-    avatar_excel_config_data = json.loads(avatar_excel_config_data_text)
-    weapon_excel_config_data = json.loads(weapon_excel_config_data_text)
-    chs_dict = json.loads(chs_dict_text)
     try:
-        for item in avatar_excel_config_data:
-            try:
-                item_id = str(item['AvatarID'])
-                hash_id = item['AvatarName']['Hash']
-                if hash_id not in chs_dict:
-                    hash_id = str(hash_id)
-                if hash_id in chs_dict and item_id:
-                    name = str(chs_dict[hash_id])
-                    if len(name) > 0:
-                        rail_ids_new[name] = int(item_id)
-            except Exception as e:
-                logger.error(e)
-        for item in weapon_excel_config_data:
-            try:
-                item_id = str(item['EquipmentID'])
-                hash_id = item['EquipmentName']['Hash']
-                if hash_id not in chs_dict:
-                    hash_id = str(hash_id)
-                if hash_id in chs_dict and item_id:
-                    name = str(chs_dict[hash_id])
-                    if len(name) > 0:
-                        rail_ids_new[name] = int(item_id)
-            except Exception as e:
-                logger.error(e)
-        rail_ids_new = sorted(rail_ids_new.items(), key=lambda x: int(x[1]))
-        rail_ids = {i[0]: str(i[1]) for i in rail_ids_new}
+        target_host = "https://api.uigf.org/dict/starrail/chs.json"
+        chs_dict = requests.get(target_host).json()
+        for k, v in chs_dict.items():
+            rail_ids[k] = str(v)
+        # 按照值排序
+        rail_ids = dict(sorted(rail_ids.items(), key=lambda x: x[1]))
         write_json(rail_id_path, rail_ids)
     except Exception as e:
         logger.error(e)

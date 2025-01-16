@@ -1,4 +1,3 @@
-from copy import deepcopy
 from time import time, sleep
 from urllib.parse import urlparse, parse_qsl, urlencode
 
@@ -182,32 +181,13 @@ def get_genshin_ids():
     if has_get_genshin_ids:
         return genshin_ids
     has_get_genshin_ids = True
-    genshin_ids_copy = deepcopy(genshin_ids)
-    target_host = "https://raw.githubusercontent.com/Masterain98/GenshinData/main/"
-    avatar_config_file = "AvatarExcelConfigData.json"
-    weapon_config_file = "WeaponExcelConfigData.json"
-    avatar_excel_config_data_text = requests.get(target_host + avatar_config_file).text
-    weapon_excel_config_data_text = requests.get(target_host + weapon_config_file).text
-    chs_dict_text = requests.get(target_host + "TextMap/TextMapCHS.json").text
-    avatar_excel_config_data = json.loads(avatar_excel_config_data_text)
-    weapon_excel_config_data = json.loads(weapon_excel_config_data_text)
-    chs_dict = json.loads(chs_dict_text)
     try:
-        for item0 in [avatar_excel_config_data, weapon_excel_config_data]:
-            for item in item0:
-                try:
-                    item_id = str(item["id"])
-                    hash_id = item["NameTextMapHash"]
-                    if hash_id not in chs_dict:
-                        hash_id = str(hash_id)
-                    if hash_id in chs_dict and item_id:
-                        name = str(chs_dict[hash_id])
-                        if len(name) > 0:
-                            genshin_ids_copy[name] = int(item_id)
-                except Exception as e:
-                    logger.error(e)
-        genshin_ids_copy = sorted(genshin_ids_copy.items(), key=lambda x: int(x[1]))
-        genshin_ids = {i[0]: str(i[1]) for i in genshin_ids_copy}
+        target_host = "https://api.uigf.org/dict/genshin/chs.json"
+        chs_dict = requests.get(target_host).json()
+        for k, v in chs_dict.items():
+            genshin_ids[k] = str(v)
+        # 按照值排序
+        genshin_ids = dict(sorted(genshin_ids.items(), key=lambda x: x[1]))
         write_json(genshin_id_path, genshin_ids)
     except Exception as e:
         logger.error(e)

@@ -1,7 +1,7 @@
 from files.genshin_info import get_genshin
 from url_genshin import get_genshin_url
 
-sleep_time = 0.6
+sleep_time = 1.2
 url = get_genshin_url()
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 from files.rail_info import get_rail
 from url_rail import get_rail_url
 
-sleep_time = 0.6
+sleep_time = 1.2
 url = get_rail_url()
 
 if __name__ == '__main__':

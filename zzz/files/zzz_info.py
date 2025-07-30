@@ -80,6 +80,8 @@ def get_zzz(url: str, sleep_time=0.6):
 def backup_and_merge_zzz(uid, new_df: pandas.DataFrame):
     if new_df["api_id"].duplicated().any():
         raise Exception("api_id重复")
+    if len(new_df) == 0:
+        raise Exception("无数据")
     uid = str(uid)
     new_df = new_df.astype(str)
     old_path = os.path.join(zzz_save_dir, uid + ".csv")
